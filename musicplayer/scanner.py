@@ -118,7 +118,7 @@ class Scanner:
         genre        = self._tag(audio_easy, 'genre') or ''
         duration     = getattr(getattr(audio_easy, 'info', None), 'length', 0) or 0
 
-        album_id = database.make_album_id(album, album_artist)
+        album_id = database.make_album_id(str(filepath.parent))
 
         if album_id not in albums_processed:
             art_path, has_art = self._extract_art(filepath, album_id)

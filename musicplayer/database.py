@@ -68,9 +68,8 @@ def initialize_database(conn):
     conn.commit()
 
 
-def make_album_id(album_title, album_artist):
-    key = f"{(album_artist or 'Unknown').lower()}|{(album_title or 'Unknown').lower()}"
-    return hashlib.md5(key.encode()).hexdigest()[:16]
+def make_album_id(folder_path: str) -> str:
+    return hashlib.md5(folder_path.encode()).hexdigest()[:16]
 
 
 def get_file_mtime(conn, file_path):
