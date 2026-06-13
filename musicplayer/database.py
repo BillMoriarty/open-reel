@@ -125,7 +125,9 @@ def get_tracks_for_album(conn, album_id):
         SELECT id, file_path, title, artist, track_number, disc_number, duration_seconds
         FROM   tracks
         WHERE  album_id = ?
-        ORDER BY disc_number, track_number
+        ORDER BY disc_number,
+                 CASE WHEN track_number > 0 THEN track_number ELSE 9999 END,
+                 file_path COLLATE NOCASE
     ''', (album_id,)).fetchall()
 
 
