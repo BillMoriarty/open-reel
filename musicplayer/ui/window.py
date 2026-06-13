@@ -112,7 +112,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         self._title_stack = Gtk.Stack()
         self._title_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
-        self._title_stack.set_transition_duration(150)
+        self._title_stack.set_transition_duration(80)
         self._title_stack.add_named(self._search_entry, 'search')
         self._title_stack.add_named(self._header_title, 'title')
         self._title_stack.set_visible_child_name('search')
@@ -144,13 +144,14 @@ class MainWindow(Adw.ApplicationWindow):
         # --- Center: Stack for in-place content swap (no push/pop) ------
         self._center_stack = Gtk.Stack()
         self._center_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
-        self._center_stack.set_transition_duration(160)
+        self._center_stack.set_transition_duration(80)
         self._center_stack.set_hexpand(True)
         self._center_stack.set_vexpand(True)
 
         self._album_page = AlbumGridPage()
-        self._album_page.connect('album-activated',   self._on_album_activated)
-        self._album_page.connect('view-mode-changed', self._on_view_mode_changed)
+        self._album_page.connect('album-activated',      self._on_album_activated)
+        self._album_page.connect('album-play-requested', self._on_album_play_requested)
+        self._album_page.connect('view-mode-changed',    self._on_view_mode_changed)
         self._center_stack.add_named(self._album_page, 'grid')
 
         self._onboarding_page = OnboardingPage()
@@ -330,12 +331,6 @@ class MainWindow(Adw.ApplicationWindow):
     def _on_back_clicked(self, _btn):
         self._center_stack.set_visible_child_name('grid')
         self._enter_grid_mode()
-        self._hide_left_album()
-        self._current_album     = None
-        self._current_album_id  = None
-        self._current_tracks    = []
-        self._current_track_idx = -1
-        self._track_page        = None
 
     def _on_search_changed(self, entry):
         self._album_page.apply_filter(entry.get_text().strip())
@@ -430,8 +425,38 @@ class MainWindow(Adw.ApplicationWindow):
         self._center_stack.set_visible_child_name('tracks')
 
         self._enter_track_mode(title)
-        self._notes_pane.set_album_context(artist, title)
+        self._notes_pane.set_album_context(artist, title, art_path=art_path)
         self._show_left_album(artist, title, art_path)
+
+    def _on_album_play_requested(self, _page, album_id):
+        """Play button on album card -- start playing without navigating to track list."""
+        conn       = database.get_connection()
+        tracks     = database.get_tracks_for_album(conn, album_id)
+        album_rows = conn.execute(
+            'SELECT album_title, album_artist, art_path FROM albums WHERE id = ?',
+            (album_id,)
+        ).fetchone()
+        conn.close()
+
+        if not album_rows or not tracks:
+            return
+
+        artist   = album_rows['album_artist'] or 'Unknown Artist'
+        title    = album_rows['album_title']  or 'Unknown Album'
+        art_path = album_rows['art_path']
+
+        self._current_album     = (artist, title)
+        self._current_album_id  = album_id
+        self._current_art_path  = art_path
+        self._current_tracks    = [dict(t) for t in tracks]
+        self._current_track_idx = -1
+        self._shuffle_order     = []
+        self._shuffle_pos       = -1
+        if self._shuffle:
+            self._build_shuffle_order()
+
+        self._show_left_album(artist, title, art_path)
+        self._play_track_at(0)
 
     # ------------------------------------------------------------------ #
     # playback

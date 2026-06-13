@@ -172,6 +172,21 @@ gridview > child:selected {{
     font-size: 10px;
 }}
 
+/* ---- album card play button (hover overlay) ---- */
+button.album-play-btn {{
+    background-color: alpha({t['accent']}, 0.82);
+    color: {t['fg']};
+    border: none;
+    border-radius: 50%;
+    padding: 6px;
+    min-width: 34px;
+    min-height: 34px;
+}}
+
+button.album-play-btn:hover {{
+    background-color: {t['accent']};
+}}
+
 /* ---- art placeholder ---- */
 .art-placeholder {{
     background-color: {t['art_bg']};
@@ -386,6 +401,10 @@ paned.main-split > separator {{
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
+}}
+
+.notes-art-thumb {{
+    border-radius: 4px;
 }}
 
 .notes-context {{

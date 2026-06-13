@@ -21,11 +21,16 @@ class _NoteSection(Gtk.Box):
         self._switching   = False
 
         # ---- Header block -----------------------------------------------
+        # Outer row: labels left, optional art thumbnail right
+        header_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        header_row.set_margin_start(12)
+        header_row.set_margin_end(10)
+        header_row.set_margin_top(8)
+        header_row.set_margin_bottom(6)
+
         header = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-        header.set_margin_start(12)
-        header.set_margin_end(12)
-        header.set_margin_top(8)
-        header.set_margin_bottom(6)
+        header.set_hexpand(True)
+        header.set_valign(Gtk.Align.CENTER)
 
         # Row 1: section title + content dot
         title_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
@@ -58,7 +63,18 @@ class _NoteSection(Gtk.Box):
         self._ctx2_lbl.set_visible(False)
         header.append(self._ctx2_lbl)
 
-        self.append(header)
+        header_row.append(header)
+
+        # Small art thumbnail (right side, album section only)
+        self._art_picture = Gtk.Picture()
+        self._art_picture.set_content_fit(Gtk.ContentFit.COVER)
+        self._art_picture.set_size_request(56, 56)
+        self._art_picture.set_valign(Gtk.Align.CENTER)
+        self._art_picture.add_css_class('notes-art-thumb')
+        self._art_picture.set_visible(False)
+        header_row.append(self._art_picture)
+
+        self.append(header_row)
         self.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
 
         # ---- Text area with overlay placeholder -------------------------
@@ -94,11 +110,19 @@ class _NoteSection(Gtk.Box):
     # ------------------------------------------------------------------ #
     # public API
 
-    def load(self, path, ctx1: str = '', ctx2: str = ''):
+    def load(self, path, ctx1: str = '', ctx2: str = '', art_path: str = None):
         """Load note from path. ctx1 = first context line, ctx2 = second."""
         self._flush()
         self._path = path
         self._set_context(ctx1, ctx2)
+        if art_path:
+            try:
+                self._art_picture.set_filename(art_path)
+                self._art_picture.set_visible(True)
+            except Exception:
+                self._art_picture.set_visible(False)
+        else:
+            self._art_picture.set_visible(False)
         text = ''
         if path and path.exists():
             try:
@@ -117,6 +141,7 @@ class _NoteSection(Gtk.Box):
         self._flush()
         self._path = None
         self._set_context(ctx1, ctx2)
+        self._art_picture.set_visible(False)
         self._switching = True
         buf = self._tv.get_buffer()
         buf.set_text('')
@@ -228,12 +253,12 @@ class NotesPane(Gtk.Box):
     # ------------------------------------------------------------------ #
     # public API
 
-    def set_album_context(self, artist, title):
+    def set_album_context(self, artist, title, art_path=None):
         self._album_artist = artist
         self._album_title  = title
         self._track_title  = ''
         path = _note_path(artist, title)
-        self._album_section.load(path, ctx1=artist, ctx2=title)
+        self._album_section.load(path, ctx1=artist, ctx2=title, art_path=art_path)
         self._track_section.clear()
 
     def set_track_context(self, artist, album_title, track_title):

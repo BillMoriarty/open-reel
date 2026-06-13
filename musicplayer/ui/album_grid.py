@@ -29,13 +29,13 @@ class _AlbumCardWidget(Gtk.Box):
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add_css_class('album-card')
-        self._current_item    = None
-        self._notify_handler  = None
+        self._current_item   = None
+        self._notify_handler = None
+        self._play_cb        = None
 
         cover_stack = Gtk.Stack()
         cover_stack.set_size_request(COVER_SIZE, COVER_SIZE)
         cover_stack.set_overflow(Gtk.Overflow.HIDDEN)
-        cover_stack.set_halign(Gtk.Align.CENTER)
         cover_stack.set_transition_type(Gtk.StackTransitionType.NONE)
 
         self._picture = Gtk.Picture()
@@ -52,7 +52,30 @@ class _AlbumCardWidget(Gtk.Box):
 
         cover_stack.set_visible_child_name('placeholder')
         self._cover_stack = cover_stack
-        self.append(cover_stack)
+
+        # Overlay wraps the cover so the play button floats over it
+        cover_overlay = Gtk.Overlay()
+        cover_overlay.set_size_request(COVER_SIZE, COVER_SIZE)
+        cover_overlay.set_halign(Gtk.Align.CENTER)
+        cover_overlay.set_child(cover_stack)
+
+        self._play_btn = Gtk.Button()
+        self._play_btn.set_icon_name('media-playback-start-symbolic')
+        self._play_btn.add_css_class('album-play-btn')
+        self._play_btn.set_halign(Gtk.Align.END)
+        self._play_btn.set_valign(Gtk.Align.END)
+        self._play_btn.set_margin_end(8)
+        self._play_btn.set_margin_bottom(8)
+        self._play_btn.set_visible(False)
+        self._play_btn.connect('clicked', self._on_play_clicked)
+        cover_overlay.add_overlay(self._play_btn)
+
+        self.append(cover_overlay)
+
+        motion = Gtk.EventControllerMotion()
+        motion.connect('enter', lambda _c, _x, _y: self._play_btn.set_visible(True))
+        motion.connect('leave', lambda _c: self._play_btn.set_visible(False))
+        self.add_controller(motion)
 
         self._title_label = Gtk.Label()
         self._title_label.add_css_class('album-title')
@@ -76,7 +99,12 @@ class _AlbumCardWidget(Gtk.Box):
         self._subtitle_label.set_visible(False)
         self.append(self._subtitle_label)
 
-    def bind(self, item):
+    def _on_play_clicked(self, _btn):
+        if self._play_cb and self._current_item:
+            self._play_cb(self._current_item.album_id)
+
+    def bind(self, item, play_cb=None):
+        self._play_cb = play_cb
         self._current_item = item
         self._notify_handler = item.connect('notify::is-playing', self._on_playing_changed)
         self._title_label.set_text(item.album_title)
@@ -143,8 +171,9 @@ def _get_initials(artist, album):
 class AlbumGridPage(Adw.NavigationPage):
 
     __gsignals__ = {
-        'album-activated':    (GObject.SignalFlags.RUN_LAST, None, (str,)),
-        'view-mode-changed':  (GObject.SignalFlags.RUN_LAST, None, (str,)),
+        'album-activated':      (GObject.SignalFlags.RUN_LAST, None, (str,)),
+        'album-play-requested': (GObject.SignalFlags.RUN_LAST, None, (str,)),
+        'view-mode-changed':    (GObject.SignalFlags.RUN_LAST, None, (str,)),
     }
 
     def __init__(self):
@@ -277,7 +306,10 @@ class AlbumGridPage(Adw.NavigationPage):
         li.set_child(_AlbumCardWidget())
 
     def _on_factory_bind(self, _f, li):
-        li.get_child().bind(li.get_item())
+        li.get_child().bind(li.get_item(), play_cb=self._on_play_btn_clicked)
+
+    def _on_play_btn_clicked(self, album_id):
+        self.emit('album-play-requested', album_id)
 
     def _on_factory_unbind(self, _f, li):
         li.get_child().unbind()
