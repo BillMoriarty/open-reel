@@ -1,6 +1,8 @@
 # Music Player
 
-A native GTK4 music player for Fedora / GNOME, built with Python and Libadwaita. No Electron, no web runtime -- just a clean desktop app that reads your local music folders and stays out of the way.
+I have a large local music library and couldn't find a Linux player that felt right. Most are Electron apps dressed up as native software, search is usually an afterthought, and onboarding is a config-file maze. I wanted something that was actually native, started fast, had real search, and looked like it belonged on a desktop -- not a phone port or a streaming app with local-file support bolted on.
+
+So I built one. Native GTK4, Python, GStreamer. No Electron, no web runtime, no internet required. It reads your folders and plays your music. It never touches your files.
 
 ![screenshot](screenshots/main.png)
 
