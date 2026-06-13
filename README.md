@@ -2,7 +2,7 @@
 
 I have a large local music library and wanted a player that felt right -- actually native, started fast, had real search, and looked like it belonged on a desktop.
 
-So I built one. Native GTK4, Python, GStreamer. No Electron, no web runtime, no internet required. It reads your folders and plays your music. It never touches your files.
+So I asked Claude to vibe code one while I cleaned my basement. Native GTK4, Python, GStreamer. No Electron, no web runtime, no internet required. It reads your folders and plays your music. It never touches your files.
 
 ![screenshot](screenshots/main.png)
 
