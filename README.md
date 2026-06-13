@@ -1,6 +1,6 @@
 # Music Player
 
-I have a large local music library and couldn't find a Linux player that felt right. Most are Electron apps dressed up as native software, search is usually an afterthought, and onboarding is a config-file maze. I wanted something that was actually native, started fast, had real search, and looked like it belonged on a desktop -- not a phone port or a streaming app with local-file support bolted on.
+I have a large local music library and wanted a player that felt right -- actually native, started fast, had real search, and looked like it belonged on a desktop.
 
 So I built one. Native GTK4, Python, GStreamer. No Electron, no web runtime, no internet required. It reads your folders and plays your music. It never touches your files.
 
