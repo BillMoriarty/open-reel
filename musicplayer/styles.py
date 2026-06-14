@@ -10,17 +10,11 @@ def get_css(t: dict | None = None) -> str:
     return f"""
 @define-color window_bg_color        {t['window_bg']};
 @define-color window_fg_color        {t['fg']};
-@define-color headerbar_bg_color     {t['header_bg']};
-@define-color headerbar_fg_color     {t['fg']};
-@define-color headerbar_border_color {t['border']};
-@define-color accent_bg_color        {t['accent_dark']};
-@define-color accent_fg_color        {t['fg']};
 @define-color accent_color           {t['accent']};
 @define-color card_bg_color          {t['card_bg']};
 @define-color card_fg_color          {t['fg']};
 @define-color view_bg_color          {t['window_bg']};
 @define-color view_fg_color          {t['fg']};
-@define-color sidebar_bg_color       {t['header_bg']};
 @define-color dialog_bg_color        {t['card_bg']};
 @define-color popover_bg_color       {t['card_bg']};
 
@@ -35,23 +29,23 @@ window, .background {{
     color: {t['fg']};
 }}
 
-/* ---- header bar ---- */
-headerbar {{
+/* ---- our header bar only (scoped to avoid leaking into system dialogs) ---- */
+.main-header {{
     background-color: {t['header_bg']};
     color: {t['fg']};
     border-bottom: 1px solid {t['border']};
     box-shadow: none;
 }}
 
-headerbar .title {{
+.main-header .title {{
     color: {t['fg']};
     font-weight: bold;
     letter-spacing: 2px;
 }}
 
-/* ---- search entry inside header ---- */
-headerbar searchentry,
-headerbar entry {{
+/* ---- search entry inside our header ---- */
+.main-header searchentry,
+.main-header entry {{
     background-color: {t['input_bg']};
     color: {t['fg']};
     border: 1px solid {t['border']};
@@ -59,8 +53,8 @@ headerbar entry {{
     caret-color: {t['accent']};
 }}
 
-headerbar searchentry:focus,
-headerbar entry:focus {{
+.main-header searchentry:focus,
+.main-header entry:focus {{
     border-color: {t['accent']};
     box-shadow: 0 0 0 2px alpha({t['accent']}, 0.25);
 }}
@@ -69,22 +63,22 @@ searchentry text {{
     color: {t['fg']};
 }}
 
-/* ---- buttons ---- */
-button {{
+/* ---- buttons (scoped to our main window to avoid polluting system dialogs) ---- */
+.music-player-main button {{
     background-color: {t['input_bg']};
     color: {t['fg']};
     border: 1px solid {t['border']};
     border-radius: 5px;
 }}
 
-button:hover {{
+.music-player-main button:hover {{
     background-color: {t['hover_bg']};
     border-color: {t['accent']};
 }}
 
-button.suggested-action {{
+.music-player-main button.suggested-action {{
     background-color: {t['accent_dark']};
-    color: {t['fg']};
+    color: #ffffff;
     border: none;
     border-radius: 6px;
     padding: 8px 20px;
@@ -93,7 +87,7 @@ button.suggested-action {{
     letter-spacing: 1px;
 }}
 
-button.suggested-action:hover {{
+.music-player-main button.suggested-action:hover {{
     background-color: {t['accent']};
 }}
 
@@ -320,6 +314,14 @@ paned.main-split > separator {{
     border-radius: 6px;
 }}
 
+.left-now-playing-badge {{
+    color: {t['accent']};
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+}}
+
 .left-album-title {{
     color: {t['fg']};
     font-size: 13px;
@@ -329,6 +331,13 @@ paned.main-split > separator {{
 .left-album-artist {{
     color: {t['fg_dim']};
     font-size: 11px;
+}}
+
+.left-album-genre {{
+    color: {t['accent']};
+    font-size: 9px;
+    letter-spacing: 1px;
+    margin-top: 2px;
 }}
 
 .header-album-title {{

@@ -122,7 +122,7 @@ def get_all_albums(conn):
 
 def get_tracks_for_album(conn, album_id):
     return conn.execute('''
-        SELECT id, file_path, title, artist, track_number, disc_number, duration_seconds
+        SELECT id, file_path, title, artist, track_number, disc_number, duration_seconds, genre
         FROM   tracks
         WHERE  album_id = ?
         ORDER BY disc_number,

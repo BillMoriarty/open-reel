@@ -71,6 +71,17 @@ class Scanner:
                     filepath.name,
                 )
 
+            # Remove DB records for files that no longer exist on disk
+            known_paths = {str(f) for f in all_audio_files}
+            db_paths = {row[0] for row in conn.execute('SELECT file_path FROM tracks').fetchall()}
+            stale = db_paths - known_paths
+            if stale:
+                conn.executemany('DELETE FROM tracks WHERE file_path = ?', [(p,) for p in stale])
+                conn.execute(
+                    'DELETE FROM albums WHERE id NOT IN '
+                    '(SELECT DISTINCT album_id FROM tracks WHERE album_id IS NOT NULL)'
+                )
+
             database.update_album_track_counts(conn)
             conn.commit()
 

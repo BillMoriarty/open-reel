@@ -27,6 +27,7 @@ class MainWindow(Adw.ApplicationWindow):
         super().__init__(**kwargs)
         self.set_title('musicplayer')
         self.set_default_size(1280, 820)
+        self.add_css_class('music-player-main')
 
         self._current_theme     = initial_theme
         self._config            = config_module.load_config()
@@ -46,6 +47,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._repeat_mode    = 'none'
         self._view_mode      = 'library'
         self._vol_save_timer = None
+        self._prefs_dlg      = None
 
         self._build_ui()
         self._decide_first_view()
@@ -211,6 +213,11 @@ class MainWindow(Adw.ApplicationWindow):
         text_box.set_margin_top(10)
         text_box.set_margin_bottom(6)
 
+        now_playing_lbl = Gtk.Label(label='NOW PLAYING')
+        now_playing_lbl.add_css_class('left-now-playing-badge')
+        now_playing_lbl.set_xalign(0)
+        text_box.append(now_playing_lbl)
+
         self._left_title_lbl = Gtk.Label()
         self._left_title_lbl.add_css_class('left-album-title')
         self._left_title_lbl.set_xalign(0)
@@ -224,6 +231,14 @@ class MainWindow(Adw.ApplicationWindow):
         self._left_artist_lbl.set_ellipsize(Pango.EllipsizeMode.END)
         self._left_artist_lbl.set_max_width_chars(18)
         text_box.append(self._left_artist_lbl)
+
+        self._left_genre_lbl = Gtk.Label()
+        self._left_genre_lbl.add_css_class('left-album-genre')
+        self._left_genre_lbl.set_xalign(0)
+        self._left_genre_lbl.set_ellipsize(Pango.EllipsizeMode.END)
+        self._left_genre_lbl.set_max_width_chars(20)
+        self._left_genre_lbl.set_visible(False)
+        text_box.append(self._left_genre_lbl)
 
         box.append(text_box)
 
@@ -282,11 +297,16 @@ class MainWindow(Adw.ApplicationWindow):
                     parts.append(words[0][0].upper())
         return ''.join(parts[:2]) or '?'
 
-    def _show_left_album(self, artist, title, art_path=None):
+    def _show_left_album(self, artist, title, art_path=None, genre=None):
         self._left_panel_artist = artist
         self._left_panel_title  = title
         self._left_title_lbl.set_text(title)
         self._left_artist_lbl.set_text(artist)
+        if genre:
+            self._left_genre_lbl.set_text(genre)
+            self._left_genre_lbl.set_visible(True)
+        else:
+            self._left_genre_lbl.set_visible(False)
         if art_path:
             try:
                 self._left_art_picture.set_filename(art_path)
@@ -368,6 +388,8 @@ class MainWindow(Adw.ApplicationWindow):
         conn.close()
         self._album_page.load_albums(albums)
         self._mascot.set_spinning(False)
+        if hasattr(self, '_prefs_dlg') and self._prefs_dlg:
+            self._prefs_dlg.set_scan_complete()
         return GLib.SOURCE_REMOVE
 
     def _on_scan_error(self, error_message):
@@ -426,7 +448,6 @@ class MainWindow(Adw.ApplicationWindow):
 
         self._enter_track_mode(title)
         self._notes_pane.set_album_context(artist, title, art_path=art_path)
-        self._show_left_album(artist, title, art_path)
 
     def _on_album_play_requested(self, _page, album_id):
         """Play button on album card -- start playing without navigating to track list."""
@@ -455,40 +476,16 @@ class MainWindow(Adw.ApplicationWindow):
         if self._shuffle:
             self._build_shuffle_order()
 
-        self._show_left_album(artist, title, art_path)
         self._play_track_at(0)
 
     # ------------------------------------------------------------------ #
     # playback
 
-    def _on_track_activated(self, _page, file_path, title, artist):
+    def _on_track_activated(self, _page, file_path, _title, _artist):
         for i, t in enumerate(self._current_tracks):
             if t['file_path'] == file_path:
-                self._current_track_idx = i
-                break
-
-        self._player.play(file_path)
-        conn = database.get_connection()
-        database.record_play(conn, file_path)
-        conn.close()
-        self._now_playing.update_track(title, artist)
-
-        if self._current_album_id:
-            self._album_page.set_playing_album(self._current_album_id)
-
-        if self._current_album:
-            self._notes_pane.set_track_context(
-                self._current_album[0], self._current_album[1], title
-            )
-
-        if self._track_page:
-            self._track_page.highlight_track(file_path)
-
-        album = self._current_album[1] if self._current_album else ''
-        self._mpris.set_track(
-            title, artist, album, self._current_art_path,
-            self._current_track_idx, len(self._current_tracks),
-        )
+                self._play_track_at(i)
+                return
 
     def _play_prev(self):
         if not self._current_tracks:
@@ -537,11 +534,17 @@ class MainWindow(Adw.ApplicationWindow):
         self._current_track_idx = idx
         title  = t.get('title')  or 'Unknown Track'
         artist = t.get('artist') or t.get('album_artist') or 'Unknown Artist'
+        genre  = t.get('genre')  or None
         self._player.play(t['file_path'])
         conn = database.get_connection()
         database.record_play(conn, t['file_path'])
         conn.close()
         self._now_playing.update_track(title, artist)
+        if self._current_album:
+            self._show_left_album(
+                self._current_album[0], self._current_album[1], self._current_art_path,
+                genre=genre,
+            )
         if self._current_album:
             self._notes_pane.set_track_context(
                 self._current_album[0], self._current_album[1], title
@@ -659,9 +662,35 @@ class MainWindow(Adw.ApplicationWindow):
     # preferences
 
     def _on_prefs_clicked(self, _btn):
-        dlg = PrefsDialog(current_theme_key=self._current_theme)
-        dlg.connect('theme-selected', self._on_theme_selected)
+        dlg = PrefsDialog(
+            current_theme_key=self._current_theme,
+            music_folders=self._config.get('music_folders', []),
+            current_font=self._config.get('font', ''),
+        )
+        dlg.connect('theme-selected',   self._on_theme_selected)
+        dlg.connect('folders-changed',  self._on_folders_changed, dlg)
+        dlg.connect('rescan-requested', self._on_rescan_requested, dlg)
+        dlg.connect('font-selected',    self._on_font_selected)
+        self._prefs_dlg = dlg
         dlg.present(self)
+
+    def _on_rescan_requested(self, _dlg, dlg):
+        self._start_scan()
+
+    def _on_folders_changed(self, _dlg, dlg):
+        self._config['music_folders'] = dlg.get_folders()
+        config_module.save_config(self._config)
+        if self._config['music_folders']:
+            self._center_stack.set_visible_child_name('grid')
+            self._notes_btn.set_visible(True)
+        self._start_scan()
+
+    def _on_font_selected(self, _dlg, font_name: str):
+        self._config['font'] = font_name
+        config_module.save_config(self._config)
+        app = self.get_application()
+        if app:
+            app.apply_font(font_name)
 
     def _on_theme_selected(self, _dlg, theme_key: str):
         self._current_theme = theme_key
@@ -694,7 +723,7 @@ class MainWindow(Adw.ApplicationWindow):
     def _on_focus_changed(self, win, _pspec):
         focused = win.get_focus()
         if focused is None:
-            self._mascot.set_gaze(GazeTarget.DOWN_RIGHT)
+            self._mascot.set_gaze(GazeTarget.CENTER)
             return
 
         notes_tvs = {self._notes_pane.album_text_view,
@@ -702,11 +731,11 @@ class MainWindow(Adw.ApplicationWindow):
         w = focused
         while w is not None:
             if isinstance(w, Gtk.SearchEntry):
-                self._mascot.set_gaze(GazeTarget.RIGHT)
+                self._mascot.set_gaze(GazeTarget.UP_RIGHT)
                 return
             if w in notes_tvs or isinstance(w, Gtk.TextView):
                 self._mascot.set_gaze(GazeTarget.FAR_RIGHT)
                 return
             w = w.get_parent()
 
-        self._mascot.set_gaze(GazeTarget.DOWN_RIGHT)
+        self._mascot.set_gaze(GazeTarget.CENTER)

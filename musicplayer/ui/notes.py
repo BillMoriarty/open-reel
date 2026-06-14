@@ -66,13 +66,22 @@ class _NoteSection(Gtk.Box):
         header_row.append(header)
 
         # Small art thumbnail (right side, album section only)
+        art_box = Gtk.Box()
+        art_box.set_size_request(56, 56)
+        art_box.set_halign(Gtk.Align.END)
+        art_box.set_valign(Gtk.Align.CENTER)
+        art_box.set_overflow(Gtk.Overflow.HIDDEN)
+        art_box.add_css_class('notes-art-thumb')
+        art_box.set_visible(False)
+
         self._art_picture = Gtk.Picture()
         self._art_picture.set_content_fit(Gtk.ContentFit.COVER)
-        self._art_picture.set_size_request(56, 56)
-        self._art_picture.set_valign(Gtk.Align.CENTER)
-        self._art_picture.add_css_class('notes-art-thumb')
-        self._art_picture.set_visible(False)
-        header_row.append(self._art_picture)
+        self._art_picture.set_hexpand(True)
+        self._art_picture.set_vexpand(True)
+        art_box.append(self._art_picture)
+
+        self._art_box = art_box
+        header_row.append(self._art_box)
 
         self.append(header_row)
         self.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
@@ -118,11 +127,11 @@ class _NoteSection(Gtk.Box):
         if art_path:
             try:
                 self._art_picture.set_filename(art_path)
-                self._art_picture.set_visible(True)
+                self._art_box.set_visible(True)
             except Exception:
-                self._art_picture.set_visible(False)
+                self._art_box.set_visible(False)
         else:
-            self._art_picture.set_visible(False)
+            self._art_box.set_visible(False)
         text = ''
         if path and path.exists():
             try:
@@ -141,7 +150,7 @@ class _NoteSection(Gtk.Box):
         self._flush()
         self._path = None
         self._set_context(ctx1, ctx2)
-        self._art_picture.set_visible(False)
+        self._art_box.set_visible(False)
         self._switching = True
         buf = self._tv.get_buffer()
         buf.set_text('')

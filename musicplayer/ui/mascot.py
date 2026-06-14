@@ -1,5 +1,6 @@
 import math
 import enum
+import random
 import gi
 gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, GLib
@@ -7,10 +8,21 @@ from gi.repository import Gtk, GLib
 
 class GazeTarget(enum.Enum):
     CENTER     = ( 0.00,  0.00)
+    UP_RIGHT   = ( 0.55, -0.55)
+    UP_LEFT    = (-0.55, -0.55)
     RIGHT      = ( 0.55,  0.00)
+    LEFT       = (-0.55,  0.00)
     FAR_RIGHT  = ( 0.65,  0.25)
     DOWN_RIGHT = ( 0.30,  0.55)
     DOWN       = ( 0.00,  0.55)
+
+_IDLE_GLANCES = [
+    GazeTarget.LEFT,
+    GazeTarget.RIGHT,
+    GazeTarget.UP_LEFT,
+    GazeTarget.UP_RIGHT,
+    GazeTarget.DOWN,
+]
 
 
 def _rgb(hex_color: str):
@@ -48,8 +60,17 @@ class MascotWidget(Gtk.DrawingArea):
         self._peak_right = 0.0
         self._vu_timer   = None
 
+        self._blink           = 0.0  # 0 = open, 1 = closed
+        self._blink_phase     = 0    # 0=waiting, 1=closing, 2=opening
+        self._blink_countdown = random.randint(1875, 5625)
+
+        self._home_gaze       = GazeTarget.CENTER
+        self._idle_countdown  = random.randint(2500, 6000)  # ~40-96 s
+        self._idle_hold       = 0                            # frames left in glance
+
         self._apply_palette(self._DEFAULT_BG, self._DEFAULT_BORDER, self._DEFAULT_ACCENT)
         self.set_draw_func(self._draw, None)
+        GLib.timeout_add(16, self._blink_tick)
 
     # ------------------------------------------------------------------ #
     # public API
@@ -59,6 +80,11 @@ class MascotWidget(Gtk.DrawingArea):
         self.queue_draw()
 
     def set_gaze(self, target: GazeTarget):
+        self._home_gaze = target
+        self._idle_hold = 0   # cancel any in-progress glance
+        self._set_gaze_target(target)
+
+    def _set_gaze_target(self, target: GazeTarget):
         tx, ty = target.value
         if abs(tx - self._tgt_x) < 0.02 and abs(ty - self._tgt_y) < 0.02:
             return
@@ -143,6 +169,40 @@ class MascotWidget(Gtk.DrawingArea):
             return GLib.SOURCE_REMOVE
         return GLib.SOURCE_CONTINUE
 
+    def _blink_tick(self):
+        # -- blink --
+        if self._blink_phase == 0:
+            self._blink_countdown -= 1
+            if self._blink_countdown <= 0:
+                self._blink_phase = 1
+        elif self._blink_phase == 1:   # closing
+            self._blink = min(1.0, self._blink + 0.25)
+            self.queue_draw()
+            if self._blink >= 1.0:
+                self._blink_phase = 2
+        else:                           # opening
+            self._blink = max(0.0, self._blink - 0.2)
+            self.queue_draw()
+            if self._blink <= 0.0:
+                self._blink = 0.0
+                self._blink_phase = 0
+                self._blink_countdown = random.randint(1875, 5625)
+
+        # -- idle glance --
+        if self._idle_hold > 0:
+            self._idle_hold -= 1
+            if self._idle_hold == 0:
+                self._set_gaze_target(self._home_gaze)
+                self._idle_countdown = random.randint(2500, 6000)
+        else:
+            self._idle_countdown -= 1
+            if self._idle_countdown <= 0:
+                pick = random.choice(_IDLE_GLANCES)
+                self._set_gaze_target(pick)
+                self._idle_hold = random.randint(75, 180)  # 1.2-2.9 s
+
+        return GLib.SOURCE_CONTINUE
+
     # ------------------------------------------------------------------ #
     # drawing
 
@@ -210,14 +270,22 @@ class MascotWidget(Gtk.DrawingArea):
         cr.arc(cx, cy, socket_r, 0, 2*math.pi)
         cr.set_source_rgb(*self._c_eye_socket)
         cr.fill()
-        px = cx + self._gaze_x * travel
-        py = cy + self._gaze_y * travel
-        cr.arc(px, py, pupil_r, 0, 2*math.pi)
-        cr.set_source_rgb(0.02, 0.04, 0.07)
-        cr.fill()
-        cr.arc(px - pupil_r*0.3, py - pupil_r*0.3, pupil_r*0.35, 0, 2*math.pi)
-        cr.set_source_rgba(1, 1, 1, 0.6)
-        cr.fill()
+        if self._blink < 1.0:
+            px = cx + self._gaze_x * travel
+            py = cy + self._gaze_y * travel
+            cr.arc(px, py, pupil_r, 0, 2*math.pi)
+            cr.set_source_rgb(0.02, 0.04, 0.07)
+            cr.fill()
+            cr.arc(px - pupil_r*0.3, py - pupil_r*0.3, pupil_r*0.35, 0, 2*math.pi)
+            cr.set_source_rgba(1, 1, 1, 0.6)
+            cr.fill()
+        # Blink lid -- slides down from top of socket; match face panel colour
+        if self._blink > 0.0:
+            lid_h = socket_r * 2 * self._blink
+            cr.rectangle(cx - socket_r, cy - socket_r, socket_r * 2, lid_h)
+            r, g, b = self._c_bg
+            cr.set_source_rgb(r * 0.7, g * 0.7, b * 0.7)
+            cr.fill()
 
     def _draw_vu(self, cr, cx, cy, s):
         bar_w      = 5*s
