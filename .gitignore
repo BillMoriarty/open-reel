@@ -6,7 +6,6 @@ build/
 .DS_Store
 *.swp
 *.swo
-screenshots/
 BUILD_PLAN.md
 IDEAS_AND_RESEARCH.md
 MASCOT.md

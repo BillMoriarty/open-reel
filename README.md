@@ -4,7 +4,8 @@ I have a large local music library and wanted a player that felt right -- actual
 
 So I asked Claude to vibe code one while I cleaned my basement. Native GTK4, Python, GStreamer. No Electron, no web runtime, no internet required. It reads your folders and plays your music. It never touches your files.
 
-![screenshot](screenshots/main.png)
+![screenshot](screenshots/openreel.png)
+![screenshot](screenshots/openreel2.png)
 
 ## How it thinks about your music
 
