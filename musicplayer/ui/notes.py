@@ -32,7 +32,7 @@ class _NoteSection(Gtk.Box):
         header.set_hexpand(True)
         header.set_valign(Gtk.Align.CENTER)
 
-        # Row 1: section title + content dot
+        # Row 1: section title + content dot + undo/redo buttons
         title_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
 
         self._section_lbl = Gtk.Label(label=section_label)
@@ -44,6 +44,28 @@ class _NoteSection(Gtk.Box):
         self._dot.add_css_class('note-has-content')
         self._dot.set_visible(False)
         title_row.append(self._dot)
+
+        _spacer = Gtk.Box()
+        _spacer.set_hexpand(True)
+        title_row.append(_spacer)
+
+        self._undo_btn = Gtk.Button()
+        self._undo_btn.set_icon_name('edit-undo-symbolic')
+        self._undo_btn.add_css_class('flat')
+        self._undo_btn.add_css_class('note-edit-btn')
+        self._undo_btn.set_tooltip_text('Undo (Ctrl+Z)')
+        self._undo_btn.set_sensitive(False)
+        self._undo_btn.connect('clicked', self._on_undo_clicked)
+        title_row.append(self._undo_btn)
+
+        self._redo_btn = Gtk.Button()
+        self._redo_btn.set_icon_name('edit-redo-symbolic')
+        self._redo_btn.add_css_class('flat')
+        self._redo_btn.add_css_class('note-edit-btn')
+        self._redo_btn.set_tooltip_text('Redo (Ctrl+Shift+Z)')
+        self._redo_btn.set_sensitive(False)
+        self._redo_btn.connect('clicked', self._on_redo_clicked)
+        title_row.append(self._redo_btn)
 
         header.append(title_row)
 
@@ -99,7 +121,11 @@ class _NoteSection(Gtk.Box):
         self._tv.set_right_margin(12)
         self._tv.set_top_margin(10)
         self._tv.set_bottom_margin(10)
-        self._tv.get_buffer().connect('changed', self._on_changed)
+        buf = self._tv.get_buffer()
+        buf.set_enable_undo(True)
+        buf.connect('changed', self._on_changed)
+        buf.connect('notify::can-undo', self._on_undo_state_changed)
+        buf.connect('notify::can-redo', self._on_undo_state_changed)
         scrolled.set_child(self._tv)
 
         overlay = Gtk.Overlay()
@@ -140,8 +166,10 @@ class _NoteSection(Gtk.Box):
                 pass
         self._switching = True
         buf = self._tv.get_buffer()
+        buf.set_enable_undo(False)   # clears history before loading new note
         buf.set_text(text)
         buf.place_cursor(buf.get_start_iter())
+        buf.set_enable_undo(True)
         self._switching = False
         self._update_indicators(text)
 
@@ -153,7 +181,9 @@ class _NoteSection(Gtk.Box):
         self._art_box.set_visible(False)
         self._switching = True
         buf = self._tv.get_buffer()
+        buf.set_enable_undo(False)
         buf.set_text('')
+        buf.set_enable_undo(True)
         self._switching = False
         self._update_indicators('')
         self._tv.set_editable(False)
@@ -167,6 +197,18 @@ class _NoteSection(Gtk.Box):
         return self._tv
 
     # ------------------------------------------------------------------ #
+
+    def _on_undo_clicked(self, _btn):
+        self._tv.get_buffer().undo()
+        self._tv.grab_focus()
+
+    def _on_redo_clicked(self, _btn):
+        self._tv.get_buffer().redo()
+        self._tv.grab_focus()
+
+    def _on_undo_state_changed(self, buf, _pspec):
+        self._undo_btn.set_sensitive(buf.get_can_undo())
+        self._redo_btn.set_sensitive(buf.get_can_redo())
 
     def _set_context(self, ctx1: str, ctx2: str):
         for lbl, text in ((self._ctx1_lbl, ctx1), (self._ctx2_lbl, ctx2)):

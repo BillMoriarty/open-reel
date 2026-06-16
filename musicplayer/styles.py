@@ -416,6 +416,25 @@ paned.main-split > separator {{
     border-radius: 4px;
 }}
 
+button.note-edit-btn {{
+    padding: 2px 4px;
+    min-width: 24px;
+    min-height: 24px;
+    color: {t['fg_muted']};
+    border: none;
+    background: none;
+}}
+
+button.note-edit-btn:hover {{
+    color: {t['fg']};
+    background-color: {t['hover_bg']};
+}}
+
+button.note-edit-btn:disabled {{
+    color: {t['fg_muted']};
+    opacity: 0.35;
+}}
+
 .notes-context {{
     color: {t['fg_muted']};
     font-size: 11px;
