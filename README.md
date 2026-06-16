@@ -100,7 +100,7 @@ Create `~/.local/bin/openreel`:
 exec python3 /path/to/open-reel/run.py "$@"
 ```
 
-Create `~/.local/share/applications/openreel.desktop`:
+Create `~/.local/share/applications/com.billmoriarty.openreel.desktop`:
 
 ```ini
 [Desktop Entry]
@@ -111,7 +111,7 @@ Exec=openreel
 Icon=multimedia-player
 Terminal=false
 Categories=Audio;Music;Player;
-StartupWMClass=openreel
+StartupWMClass=com.billmoriarty.openreel
 ```
 
 Then:
