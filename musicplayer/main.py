@@ -14,7 +14,7 @@ class MusicPlayerApp(Adw.Application):
 
     def __init__(self):
         super().__init__(
-            application_id='com.billmoriarty.musicplayer',
+            application_id='com.billmoriarty.openreel',
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
         self._css_provider  = None

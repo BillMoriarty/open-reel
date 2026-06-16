@@ -11,36 +11,43 @@ class PlayState(enum.Enum):
 
 
 class Player:
-    """GStreamer playbin with real-time level analysis.
+    """GStreamer playbin with real-time level analysis and gapless playback.
 
     All callbacks fire on the GLib main thread.
     on_level(left_db, right_db) fires ~every 80 ms while playing.
+    on_track_started() fires when a gapless transition completes.
     """
 
     _LEVEL_INTERVAL_NS = 80 * Gst.MSECOND   # 80 ms in nanoseconds
 
     def __init__(self, on_state_changed=None, on_position=None,
-                 on_error=None, on_track_ended=None, on_level=None):
+                 on_error=None, on_track_ended=None, on_level=None,
+                 on_track_started=None):
         Gst.init(None)
-        self._playbin     = None
-        self._state       = PlayState.STOPPED
-        self._duration_ns = 0
-        self._current     = None
-        self._pos_timer   = None
+        self._playbin         = None
+        self._state           = PlayState.STOPPED
+        self._duration_ns     = 0
+        self._current         = None
+        self._pos_timer       = None
+        self._next_uri        = None
+        self._gapless_pending = False
 
         self._on_state_changed = on_state_changed
         self._on_position      = on_position
         self._on_error         = on_error
         self._on_track_ended   = on_track_ended
         self._on_level         = on_level
+        self._on_track_started = on_track_started
         self._volume           = 1.0
 
     # ------------------------------------------------------------------ #
 
     def play(self, file_path):
         self._stop_pipeline()
-        self._current     = file_path
-        self._duration_ns = 0
+        self._current         = file_path
+        self._duration_ns     = 0
+        self._next_uri        = None
+        self._gapless_pending = False
 
         self._playbin = Gst.ElementFactory.make('playbin', 'player')
         self._playbin.set_property('uri', Gst.filename_to_uri(file_path))
@@ -55,10 +62,17 @@ class Player:
         bus.add_signal_watch()
         bus.connect('message', self._on_bus_message)
 
+        # Gapless: about-to-finish fires near end of track on streaming thread
+        self._playbin.connect('about-to-finish', self._on_about_to_finish)
+
         self._playbin.set_state(Gst.State.PLAYING)
         self._state = PlayState.PLAYING
         self._fire_state()
         self._start_timer()
+
+    def set_next_uri(self, file_path):
+        """Pre-register the next file for gapless playback. Call after each track starts."""
+        self._next_uri = Gst.filename_to_uri(file_path) if file_path else None
 
     def pause(self):
         if self._playbin and self._state == PlayState.PLAYING:
@@ -138,6 +152,13 @@ class Player:
     # ------------------------------------------------------------------ #
     # internals
 
+    def _on_about_to_finish(self, playbin):
+        # Runs on GStreamer streaming thread -- only touch the playbin URI, nothing else.
+        # Setting uri here causes GStreamer to transition seamlessly without pipeline teardown.
+        if self._next_uri:
+            playbin.props.uri = self._next_uri
+            self._gapless_pending = True
+
     def _start_timer(self):
         if self._pos_timer:
             GLib.source_remove(self._pos_timer)
@@ -161,7 +182,16 @@ class Player:
 
     def _on_bus_message(self, _bus, message):
         t = message.type
-        if t == Gst.MessageType.EOS:
+        if t == Gst.MessageType.STREAM_START:
+            # Fires at the start of every stream, including gapless transitions.
+            # Only act when we know a gapless jump was queued.
+            if self._gapless_pending:
+                self._gapless_pending = False
+                self._duration_ns = 0   # reset so tick() re-queries for new track
+                if self._on_track_started:
+                    self._on_track_started()
+        elif t == Gst.MessageType.EOS:
+            # Only fires when there was no next URI set (last track or gapless disabled).
             self._state = PlayState.STOPPED
             self._fire_state()
             if self._on_track_ended:
@@ -189,6 +219,8 @@ class Player:
             self._playbin.set_state(Gst.State.NULL)
             self._playbin.get_bus().remove_signal_watch()
             self._playbin = None
+        self._next_uri        = None
+        self._gapless_pending = False
 
     def _fire_state(self):
         if self._on_state_changed:

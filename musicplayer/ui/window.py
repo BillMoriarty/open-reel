@@ -25,7 +25,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def __init__(self, initial_theme: str = 'technics-blue', **kwargs):
         super().__init__(**kwargs)
-        self.set_title('musicplayer')
+        self.set_title('Open Reel')
         self.set_default_size(1280, 820)
         self.add_css_class('music-player-main')
 
@@ -71,6 +71,7 @@ class MainWindow(Adw.ApplicationWindow):
             on_error         = self._on_player_error,
             on_track_ended   = self._on_track_ended,
             on_level         = self._on_audio_level,
+            on_track_started = self._on_gapless_track_started,
         )
 
         outer = Adw.ToolbarView()
@@ -530,12 +531,16 @@ class MainWindow(Adw.ApplicationWindow):
     def _play_track_at(self, idx):
         if not (0 <= idx < len(self._current_tracks)):
             return
-        t                       = self._current_tracks[idx]
         self._current_track_idx = idx
+        self._player.play(self._current_tracks[idx]['file_path'])
+        self._update_ui_for_track(idx)
+
+    def _update_ui_for_track(self, idx):
+        """Sync all UI to the track at idx and pre-load the next URI for gapless."""
+        t      = self._current_tracks[idx]
         title  = t.get('title')  or 'Unknown Track'
         artist = t.get('artist') or t.get('album_artist') or 'Unknown Artist'
         genre  = t.get('genre')  or None
-        self._player.play(t['file_path'])
         conn = database.get_connection()
         database.record_play(conn, t['file_path'])
         conn.close()
@@ -545,7 +550,6 @@ class MainWindow(Adw.ApplicationWindow):
                 self._current_album[0], self._current_album[1], self._current_art_path,
                 genre=genre,
             )
-        if self._current_album:
             self._notes_pane.set_track_context(
                 self._current_album[0], self._current_album[1], title
             )
@@ -556,6 +560,61 @@ class MainWindow(Adw.ApplicationWindow):
             title, artist, album, self._current_art_path,
             idx, len(self._current_tracks),
         )
+        self._push_next_uri(idx)
+
+    def _push_next_uri(self, current_idx):
+        """Tell the player what comes next so it can transition without a gap."""
+        next_idx = self._get_next_idx(current_idx)
+        if next_idx is not None:
+            self._player.set_next_uri(self._current_tracks[next_idx]['file_path'])
+        else:
+            self._player.set_next_uri(None)
+
+    def _get_next_idx(self, current_idx):
+        """Return the index that follows current_idx under current shuffle/repeat settings."""
+        if not self._current_tracks:
+            return None
+        if self._repeat_mode == 'track':
+            return current_idx
+        if self._shuffle and self._shuffle_order:
+            next_pos = self._shuffle_pos + 1
+            if next_pos < len(self._shuffle_order):
+                return self._shuffle_order[next_pos]
+            # shuffle+repeat-album boundary: let EOS fire normally, _play_next rebuilds order
+            return None
+        next_idx = current_idx + 1
+        if next_idx < len(self._current_tracks):
+            return next_idx
+        if self._repeat_mode == 'album':
+            return 0
+        return None
+
+    def _on_gapless_track_started(self):
+        """Called by Player when a gapless transition completes (STREAM_START on bus)."""
+        if not self._current_tracks:
+            return
+        if self._repeat_mode == 'track':
+            # Same track looped -- record play and re-register next URI
+            t = self._current_tracks[self._current_track_idx]
+            conn = database.get_connection()
+            database.record_play(conn, t['file_path'])
+            conn.close()
+            self._push_next_uri(self._current_track_idx)
+            return
+        # Advance index
+        if self._shuffle and self._shuffle_order:
+            self._shuffle_pos += 1
+            if self._shuffle_pos >= len(self._shuffle_order):
+                return
+            new_idx = self._shuffle_order[self._shuffle_pos]
+        else:
+            new_idx = self._current_track_idx + 1
+            if new_idx >= len(self._current_tracks):
+                new_idx = 0 if self._repeat_mode == 'album' else None
+        if new_idx is None:
+            return
+        self._current_track_idx = new_idx
+        self._update_ui_for_track(new_idx)
 
     def _on_player_state(self, state):
         self._now_playing.update_state(state)
@@ -608,11 +667,15 @@ class MainWindow(Adw.ApplicationWindow):
             self._shuffle_order = []
             self._shuffle_pos   = -1
         self._mpris.set_shuffle(active)
+        if self._current_tracks and self._current_track_idx >= 0:
+            self._push_next_uri(self._current_track_idx)
 
     def _on_repeat_changed(self, mode: str):
         self._repeat_mode = mode
         loop = {'none': 'None', 'album': 'Playlist', 'track': 'Track'}.get(mode, 'None')
         self._mpris.set_loop_status(loop)
+        if self._current_tracks and self._current_track_idx >= 0:
+            self._push_next_uri(self._current_track_idx)
 
     def _on_volume_changed(self, v: float):
         self._player.set_volume(v)

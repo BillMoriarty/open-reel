@@ -1,4 +1,4 @@
-# Music Player
+# Open Reel
 
 I have a large local music library and wanted a player that felt right -- actually native, started fast, had real search, and looked like it belonged on a desktop.
 

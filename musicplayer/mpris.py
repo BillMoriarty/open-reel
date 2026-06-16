@@ -13,7 +13,7 @@ _MPRIS_IFACE  = 'org.mpris.MediaPlayer2'
 _PLAYER_IFACE = 'org.mpris.MediaPlayer2.Player'
 _PROPS_IFACE  = 'org.freedesktop.DBus.Properties'
 _MPRIS_PATH   = '/org/mpris/MediaPlayer2'
-_BUS_NAME     = 'org.mpris.MediaPlayer2.musicplayer'
+_BUS_NAME     = 'org.mpris.MediaPlayer2.openreel'
 
 
 def _noop(*_a, **_kw):
@@ -92,7 +92,7 @@ class _MPRISImpl(dbus.service.Object):
                 'CanQuit':             _b(False),
                 'CanRaise':            _b(False),
                 'HasTrackList':        _b(False),
-                'Identity':            _s('musicplayer'),
+                'Identity':            _s('Open Reel'),
                 'SupportedUriSchemes': _arr([]),
                 'SupportedMimeTypes':  _arr([]),
             }
@@ -175,7 +175,7 @@ class _MPRISImpl(dbus.service.Object):
                   track_idx, track_count):
         meta = {
             'mpris:trackid': dbus.ObjectPath(
-                f'/org/musicplayer/track/{track_idx}'),
+                f'/org/openreel/track/{track_idx}'),
             'xesam:title':  dbus.String(title  or ''),
             'xesam:artist': dbus.Array(
                 [dbus.String(artist or '')], signature='s'),
