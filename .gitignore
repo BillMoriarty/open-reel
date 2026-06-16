@@ -7,3 +7,7 @@ build/
 *.swp
 *.swo
 screenshots/
+BUILD_PLAN.md
+IDEAS_AND_RESEARCH.md
+MASCOT.md
+SPEC.md
