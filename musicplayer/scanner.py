@@ -7,7 +7,7 @@ import mutagen
 
 from musicplayer import database
 
-ART_CACHE_DIR = Path.home() / '.cache' / 'musicplayer' / 'art'
+ART_CACHE_DIR = Path.home() / '.cache' / 'openreel' / 'art'
 
 AUDIO_EXTENSIONS = {'.flac', '.mp3', '.ogg', '.opus', '.m4a', '.mp4', '.wav', '.aac'}
 

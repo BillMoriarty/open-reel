@@ -3,7 +3,7 @@ import hashlib
 import time
 from pathlib import Path
 
-DATA_DIR = Path.home() / '.local' / 'share' / 'musicplayer'
+DATA_DIR = Path.home() / '.local' / 'share' / 'openreel'
 DATABASE_FILE = DATA_DIR / 'library.db'
 
 SCHEMA_VERSION = 1

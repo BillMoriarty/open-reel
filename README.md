@@ -93,31 +93,31 @@ On first launch you will be prompted to choose a music folder. The app scans it 
 
 ## Desktop launcher (optional)
 
-Create `~/.local/bin/musicplayer`:
+Create `~/.local/bin/openreel`:
 
 ```bash
 #!/bin/bash
-exec python3 /path/to/music-player/run.py "$@"
+exec python3 /path/to/open-reel/run.py "$@"
 ```
 
-Create `~/.local/share/applications/musicplayer.desktop`:
+Create `~/.local/share/applications/openreel.desktop`:
 
 ```ini
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Music Player
-Exec=musicplayer
+Name=Open Reel
+Exec=openreel
 Icon=multimedia-player
 Terminal=false
 Categories=Audio;Music;Player;
-StartupWMClass=musicplayer
+StartupWMClass=openreel
 ```
 
 Then:
 
 ```bash
-chmod +x ~/.local/bin/musicplayer
+chmod +x ~/.local/bin/openreel
 update-desktop-database ~/.local/share/applications/
 ```
 
@@ -125,10 +125,10 @@ update-desktop-database ~/.local/share/applications/
 
 | What | Where |
 |---|---|
-| Library database | `~/.local/share/musicplayer/library.db` |
-| Album art cache | `~/.cache/musicplayer/art/` |
-| Notes | `~/.local/share/musicplayer/notes/` |
-| Config | `~/.config/musicplayer/config.toml` |
+| Library database | `~/.local/share/openreel/library.db` |
+| Album art cache | `~/.cache/openreel/art/` |
+| Notes | `~/.local/share/openreel/notes/` |
+| Config | `~/.config/openreel/config.toml` |
 
 The app never touches your music files. No renaming, no moving, no tag writing.
 

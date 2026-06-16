@@ -1,7 +1,7 @@
 import tomllib
 from pathlib import Path
 
-CONFIG_DIR = Path.home() / '.config' / 'musicplayer'
+CONFIG_DIR = Path.home() / '.config' / 'openreel'
 CONFIG_FILE = CONFIG_DIR / 'config.toml'
 
 DEFAULTS = {
