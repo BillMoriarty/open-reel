@@ -86,8 +86,8 @@ sudo dnf install python3-gobject python3-gst1 python3-mutagen \
 
 ```bash
 git clone <repo-url>
-cd music-player
-python run.py
+cd fedora-music-player
+python3 run.py
 ```
 
 On first launch you will be prompted to choose a music folder. The app scans it in the background and is ready in seconds.
