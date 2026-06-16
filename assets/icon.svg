@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Cream background (Daylight mascot_bg) -->
+  <circle cx="256" cy="256" r="256" fill="#EDE8DC"/>
+
+  <!-- Reel outer ring: white fill (mascot _c_reel = bg*2.2 = white), brown border -->
+  <circle cx="256" cy="256" r="210" fill="#FFFFFF" stroke="#8A7060" stroke-width="9"/>
+
+  <!-- Subtle tape-wound ring between hub and rim -->
+  <circle cx="256" cy="256" r="118" fill="none" stroke="#C8B898" stroke-width="22" opacity="0.55"/>
+
+  <!-- Three spokes at 120° intervals, one pointing straight up -->
+  <!-- Up (90°) -->
+  <line x1="256" y1="221" x2="256" y2="68"
+        stroke="#2060A8" stroke-width="14" stroke-linecap="round"/>
+  <!-- Lower-right (330°) -->
+  <line x1="286.3" y1="273.5" x2="419.5" y2="350"
+        stroke="#2060A8" stroke-width="14" stroke-linecap="round"/>
+  <!-- Lower-left (210°) -->
+  <line x1="225.7" y1="273.5" x2="92.5" y2="350"
+        stroke="#2060A8" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Hub: cream circle with brown ring -->
+  <circle cx="256" cy="256" r="40" fill="#EDE8DC" stroke="#8A7060" stroke-width="3"/>
+
+  <!-- Spindle dot: blue -->
+  <circle cx="256" cy="256" r="16" fill="#2060A8"/>
+</svg>
