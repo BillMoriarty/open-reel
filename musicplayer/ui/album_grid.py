@@ -194,6 +194,7 @@ class AlbumGridPage(Adw.NavigationPage):
         self._inner_stack.set_vexpand(True)
         self._inner_stack.add_named(self._build_scanning_view(), 'scanning')
         self._inner_stack.add_named(self._build_grid_view(),    'grid')
+        self._inner_stack.add_named(self._build_empty_view(),   'empty')
         self._inner_stack.set_visible_child_name('scanning')
         self.set_child(self._inner_stack)
 
@@ -217,6 +218,23 @@ class AlbumGridPage(Adw.NavigationPage):
         self._progress_label.set_ellipsize(3)
         self._progress_label.set_max_width_chars(70)
         box.append(self._progress_label)
+
+        return box
+
+    def _build_empty_view(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        box.set_halign(Gtk.Align.CENTER)
+        box.set_valign(Gtk.Align.CENTER)
+        box.set_hexpand(True)
+        box.set_vexpand(True)
+
+        title = Gtk.Label(label='no music found')
+        title.add_css_class('scanning-title')
+        box.append(title)
+
+        subtitle = Gtk.Label(label='open Settings to add a different folder')
+        subtitle.add_css_class('onboarding-note')
+        box.append(subtitle)
 
         return box
 
@@ -345,7 +363,7 @@ class AlbumGridPage(Adw.NavigationPage):
         self._album_store.remove_all()
         for album_row in albums:
             self._album_store.append(AlbumItem(album_row))
-        self._inner_stack.set_visible_child_name('grid')
+        self._inner_stack.set_visible_child_name('grid' if albums else 'empty')
 
     def apply_filter(self, query):
         self._search_query = query.lower()
