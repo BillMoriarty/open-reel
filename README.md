@@ -85,8 +85,8 @@ sudo dnf install python3-gobject python3-gst1 python3-mutagen \
 ## Running
 
 ```bash
-git clone <repo-url>
-cd fedora-music-player
+git clone https://github.com/BillMoriarty/open-reel.git
+cd open-reel
 python3 run.py
 ```
 
