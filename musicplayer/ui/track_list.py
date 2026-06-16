@@ -1,8 +1,13 @@
+import subprocess
+from pathlib import Path
+
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
+gi.require_version('Gdk', '4.0')
 gi.require_version('Pango', '1.0')
-from gi.repository import Gtk, Adw, Pango, GObject
+from gi.repository import Gtk, Adw, Gdk, Pango, GObject
+import mutagen
 
 
 def _fmt(seconds):
@@ -47,6 +52,98 @@ class TrackRow(Gtk.ListBoxRow):
         box.append(dur_lbl)
 
         self.set_child(box)
+
+        gesture = Gtk.GestureClick()
+        gesture.set_button(3)
+        gesture.connect('pressed', self._on_right_click)
+        self.add_controller(gesture)
+
+    def _on_right_click(self, gesture, _n, x, y):
+        gesture.set_state(Gtk.EventSequenceState.CLAIMED)
+        popover = Gtk.Popover()
+        popover.set_has_arrow(False)
+        popover.set_parent(self)
+
+        rect = Gdk.Rectangle()
+        rect.x, rect.y, rect.width, rect.height = int(x), int(y), 1, 1
+        popover.set_pointing_to(rect)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        box.set_margin_top(4)
+        box.set_margin_bottom(4)
+
+        show_btn = Gtk.Button(label='Show in Files')
+        show_btn.add_css_class('flat')
+        show_btn.set_halign(Gtk.Align.FILL)
+        show_btn.connect('clicked', lambda _: (popover.popdown(), self._show_in_files()))
+        box.append(show_btn)
+
+        info_btn = Gtk.Button(label='File info')
+        info_btn.add_css_class('flat')
+        info_btn.set_halign(Gtk.Align.FILL)
+        info_btn.connect('clicked', lambda _: (popover.popdown(), self._show_file_info()))
+        box.append(info_btn)
+
+        popover.set_child(box)
+        popover.popup()
+
+    def _show_in_files(self):
+        folder = str(Path(self.file_path).parent)
+        subprocess.Popen(['xdg-open', folder])
+
+    def _show_file_info(self):
+        info = _read_file_info(self.file_path)
+        dialog = Adw.MessageDialog(
+            transient_for=self.get_root(),
+            heading=self.title,
+            body=info,
+        )
+        dialog.add_response('close', 'Close')
+        dialog.set_default_response('close')
+        dialog.present()
+
+
+def _read_file_info(file_path):
+    path = Path(file_path)
+    try:
+        size = path.stat().st_size
+        size_str = f'{size / 1048576:.1f} MB' if size > 1048576 else f'{size / 1024:.0f} KB'
+    except OSError:
+        size_str = 'unknown'
+
+    fmt_map = {
+        '.flac': 'FLAC', '.mp3': 'MP3', '.m4a': 'AAC (M4A)',
+        '.aac': 'AAC', '.ogg': 'Ogg Vorbis', '.opus': 'Opus',
+        '.wav': 'WAV', '.mp4': 'AAC (MP4)',
+    }
+    fmt = fmt_map.get(path.suffix.lower(), path.suffix.upper().lstrip('.'))
+
+    lines = [f'Format:      {fmt}', f'Size:        {size_str}', f'Path:        {file_path}']
+
+    try:
+        audio = mutagen.File(file_path)
+        if audio and hasattr(audio, 'info'):
+            inf = audio.info
+            dur = getattr(inf, 'length', 0)
+            if dur:
+                m, s = divmod(int(dur), 60)
+                lines.insert(0, f'Duration:    {m}:{s:02d}')
+            sr = getattr(inf, 'sample_rate', 0)
+            if sr:
+                lines.append(f'Sample rate: {sr / 1000:.1f} kHz')
+            bps = getattr(inf, 'bits_per_sample', 0)
+            if bps:
+                lines.append(f'Bit depth:   {bps}-bit')
+            br = getattr(inf, 'bitrate', 0)
+            if br:
+                lines.append(f'Bitrate:     {br // 1000} kbps')
+            ch = getattr(inf, 'channels', 0)
+            if ch:
+                lines.append(f'Channels:    {"Stereo" if ch == 2 else "Mono" if ch == 1 else str(ch)}')
+    except Exception:
+        pass
+
+    return '\n'.join(lines)
 
 
 class TrackListPage(Adw.NavigationPage):
