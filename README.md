@@ -2,7 +2,7 @@
 
 I have a large local music library and wanted a player that felt right -- actually native, started fast, had real search, and looked like it belonged on a desktop.
 
-So I asked Claude to vibe code one while I cleaned my basement. Native GTK4, Python, GStreamer. No Electron, no web runtime, no internet required. It reads your folders and plays your music. It never touches your files.
+So I asked Claude to vibe code one while I cleaned my basement. Native GTK4, Python, GStreamer. No Electron, no web runtime, no internet required, no subscription. It reads your folders, plays your music, and never touches your files.
 
 ![screenshot](screenshots/openreel.png)
 ![screenshot](screenshots/openreel2.png)
@@ -31,7 +31,7 @@ Track order within an album uses the `track` tag if present, then falls back to 
 
 **Shuffle and repeat:** shuffle randomizes play order within the current album. Repeat cycles through off / album / track (track repeat shows a "1" badge on the button).
 
-**Notes:** click the notes icon in the header to open the notes panel on the right. You can write a note about the album and a separate note about the current track. Notes are saved as plain `.md` files in `~/.local/share/musicplayer/notes/` -- one file per album, one per track.
+**Notes:** click the notes icon in the header to open the notes panel on the right. You can write a note about the album and a separate note about the current track. Notes save as plain `.md` files in `~/.local/share/openreel/notes/` -- one per album, one per track. They're just text files. Open them in anything.
 
 **Rescanning:** if you add or move music files, open Settings and click "rescan library". The app also scans on every launch. Files you have deleted or moved are removed from the library on the next scan.
 
@@ -50,7 +50,7 @@ Track order within an album uses the `track` tag if present, then falls back to 
 - Library / Recent / Top Played tabs above the grid
 - Per-album and per-track notes saved as plain `.md` files
 - Genre display from track tags
-- Animated mascot "The Deck" -- reel-to-reel with eye tracking, idle glances, blinking, spinning reels, and stereo VU bars
+- Animated mascot "The Deck" -- a reel-to-reel that tracks your cursor, blinks, glances around when it gets bored, and spins when music plays, with stereo VU bars
 - 8 built-in themes with live switching
 - System font picker -- family, size, style, and weight all apply
 - MPRIS2 support -- media keys, GNOME shell now-playing, lock screen controls
@@ -109,7 +109,7 @@ Version=1.0
 Type=Application
 Name=Open Reel
 Exec=openreel
-Icon=multimedia-player
+Icon=com.openreel.app
 Terminal=false
 Categories=Audio;Music;Player;
 StartupWMClass=com.openreel.app

@@ -192,6 +192,28 @@ class _NoteSection(Gtk.Box):
     def flush(self):
         self._flush()
 
+    def reload(self):
+        """Re-read from disk if the file changed externally."""
+        if self._path is None:
+            return
+        text = ''
+        if self._path.exists():
+            try:
+                text = self._path.read_text(encoding='utf-8')
+            except OSError:
+                pass
+        buf = self._tv.get_buffer()
+        s, e = buf.get_bounds()
+        if buf.get_text(s, e, False) == text:
+            return
+        self._switching = True
+        buf.set_enable_undo(False)
+        buf.set_text(text)
+        buf.place_cursor(buf.get_start_iter())
+        buf.set_enable_undo(True)
+        self._switching = False
+        self._update_indicators(text)
+
     @property
     def text_view(self):
         return self._tv
@@ -272,6 +294,7 @@ class NotesPane(Gtk.Box):
         self._track_title  = ''
 
         self._build_ui()
+        self.connect('map', self._on_mapped)
 
     # ------------------------------------------------------------------ #
 
@@ -323,6 +346,10 @@ class NotesPane(Gtk.Box):
     def flush_all(self):
         self._album_section.flush()
         self._track_section.flush()
+
+    def _on_mapped(self, _widget):
+        self._album_section.reload()
+        self._track_section.reload()
 
     @property
     def album_text_view(self):
