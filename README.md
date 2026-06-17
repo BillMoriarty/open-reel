@@ -1,6 +1,6 @@
 # Open Reel
 
-I have a large local music library and wanted a player that felt right -- actually native, started fast, had real search, and looked like it belonged on a desktop.
+I have a large local music library and wanted a player that felt right - actually native, started fast, had real search, and looked like it belonged on a desktop.
 
 So I asked Claude to vibe code one while I cleaned my basement. Native GTK4, Python, GStreamer. No Electron, no web runtime, no internet required, no subscription. It reads your folders, plays your music, and never touches your files.
 
