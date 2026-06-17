@@ -92,6 +92,31 @@ python3 run.py
 
 On first launch you will be prompted to choose a music folder. The app scans it in the background and is ready in seconds.
 
+## Running as a Flatpak (alternative)
+
+Flatpak sandboxes the app and handles its own dependencies, so you don't need the `dnf install` step. You do need `flatpak-builder` and the GNOME runtime installed first:
+
+```bash
+sudo dnf install flatpak-builder
+flatpak install flathub org.gnome.Platform//49 org.gnome.Sdk//49
+```
+
+Then build and install:
+
+```bash
+git clone https://github.com/BillMoriarty/open-reel.git
+cd open-reel
+flatpak-builder --user --install --force-clean build-dir com.openreel.app.yml
+```
+
+After that, launch it with:
+
+```bash
+flatpak run com.openreel.app
+```
+
+Or find it in your application launcher under "Open Reel".
+
 ## Desktop launcher (optional)
 
 Create `~/.local/bin/openreel`:
