@@ -31,7 +31,7 @@ Track order within an album uses the `track` tag if present, then falls back to 
 
 **Shuffle and repeat:** shuffle randomizes play order within the current album. Repeat cycles through off / album / track (track repeat shows a "1" badge on the button).
 
-**Notes:** click the notes icon in the header to open the notes panel on the right. You can write a note about the album and a separate note about the current track. Notes save as plain `.md` files in `~/.local/share/openreel/notes/`, one per album, one per track. They're just text files. Open them in anything.
+**Notes:** click the notes icon in the header to open the notes panel on the right. You can write a note about the album and a separate note about the current track. Notes save as plain `.md` files in `~/.local/share/openreel/notes/`, one per album, one per track. They're just text files. Open them in anything. To find the folder, open Settings and click "open folder" in the Notes section.
 
 **Rescanning:** if you add or move music files, open Settings and click "rescan library". The app also scans on every launch. Files you have deleted or moved are removed from the library on the next scan.
 
