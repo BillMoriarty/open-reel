@@ -1,10 +1,14 @@
 import math
+import subprocess
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GObject
 
+from musicplayer.database import DATA_DIR
 from musicplayer.themes import THEMES
+
+NOTES_DIR = DATA_DIR / 'notes'
 
 
 class _ThemeSwatch(Gtk.DrawingArea):
@@ -130,6 +134,31 @@ class PrefsDialog(Adw.Dialog):
 
         body.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
 
+        # ---- Notes section ----
+        notes_lbl = Gtk.Label(label='NOTES')
+        notes_lbl.add_css_class('notes-section-title')
+        notes_lbl.set_halign(Gtk.Align.START)
+        body.append(notes_lbl)
+
+        notes_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        notes_row.set_valign(Gtk.Align.CENTER)
+
+        notes_path_lbl = Gtk.Label(label=str(NOTES_DIR))
+        notes_path_lbl.add_css_class('notes-context')
+        notes_path_lbl.set_halign(Gtk.Align.START)
+        notes_path_lbl.set_hexpand(True)
+        notes_path_lbl.set_ellipsize(3)
+        notes_row.append(notes_path_lbl)
+
+        open_notes_btn = Gtk.Button(label='open folder')
+        open_notes_btn.add_css_class('flat')
+        open_notes_btn.connect('clicked', self._on_open_notes_folder)
+        notes_row.append(open_notes_btn)
+
+        body.append(notes_row)
+
+        body.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
+
         # ---- Font section ----
         font_lbl = Gtk.Label(label='FONT')
         font_lbl.add_css_class('notes-section-title')
@@ -245,6 +274,10 @@ class PrefsDialog(Adw.Dialog):
         self._current_font = ''
         self._font_name_lbl.set_text('default (Cantarell)')
         self.emit('font-selected', '')
+
+    def _on_open_notes_folder(self, _btn):
+        NOTES_DIR.mkdir(parents=True, exist_ok=True)
+        subprocess.Popen(['xdg-open', str(NOTES_DIR)])
 
     def _on_rescan_clicked(self, _btn):
         self._rescan_btn.set_label('scanning...')
