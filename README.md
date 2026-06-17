@@ -61,12 +61,12 @@ Track order within an album uses the `track` tag if present, then falls back to 
 
 ## Requirements
 
-All dependencies are system packages -- no pip install needed.
+Tested on Fedora 44 with GNOME. All dependencies are system packages -- no pip install needed.
 
 ```
 python3
 python3-gobject        (PyGObject / GTK4 bindings)
-python3-gst-1.0        (GStreamer Python bindings)
+python3-gst1           (GStreamer Python bindings)
 python3-mutagen        (audio tag reading)
 python3-dbus           (MPRIS2 / media keys)
 gstreamer1-plugins-good

@@ -11,7 +11,7 @@ class OnboardingPage(Adw.NavigationPage):
     }
 
     def __init__(self):
-        super().__init__(title='musicplayer')
+        super().__init__(title='Open Reel')
         self.set_can_pop(False)
         self._build_ui()
 
@@ -28,7 +28,7 @@ class OnboardingPage(Adw.NavigationPage):
         inner.set_margin_start(32)
         inner.set_margin_end(32)
 
-        title = Gtk.Label(label='[ MUSICPLAYER ]')
+        title = Gtk.Label(label='[ OPEN REEL ]')
         title.add_css_class('onboarding-title')
         title.set_halign(Gtk.Align.CENTER)
         inner.append(title)
