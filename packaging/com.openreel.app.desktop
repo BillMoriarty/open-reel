@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Open Reel
+Comment=Local music player with per-album notes
+Exec=openreel
+Icon=com.openreel.app
+Terminal=false
+Categories=Audio;Music;Player;
+StartupWMClass=com.openreel.app

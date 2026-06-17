@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.openreel.app</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Open Reel</name>
+  <summary>Local music player with per-album notes</summary>
+  <description>
+    <p>
+      A native GTK4 music player for large local libraries. Albums are organized by folder,
+      not by tag. Per-album and per-track notes save as plain Markdown files. Includes an
+      animated reel-to-reel mascot, eight themes, MPRIS2 support, and gapless playback.
+    </p>
+    <ul>
+      <li>Album grid with cover art</li>
+      <li>Per-album and per-track notes saved as plain .md files</li>
+      <li>Folder-based library organization</li>
+      <li>Gapless playback</li>
+      <li>MPRIS2 support for media keys and lock screen</li>
+      <li>Eight built-in themes with live switching</li>
+      <li>System font picker</li>
+      <li>Animated reel-to-reel mascot</li>
+    </ul>
+  </description>
+  <categories>
+    <category>Audio</category>
+    <category>Music</category>
+    <category>Player</category>
+    <category>GTK</category>
+  </categories>
+  <url type="homepage">https://github.com/BillMoriarty/open-reel</url>
+  <url type="bugtracker">https://github.com/BillMoriarty/open-reel/issues</url>
+  <provides>
+    <binary>openreel</binary>
+  </provides>
+  <releases>
+    <release version="0.1.0" date="2026-06-16">
+      <description>
+        <p>Initial public release.</p>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1" />
+  <launchable type="desktop-id">com.openreel.app.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Open Reel album grid</caption>
+      <image>https://raw.githubusercontent.com/BillMoriarty/open-reel/main/screenshots/openreel.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Open Reel with Technics Blue theme</caption>
+      <image>https://raw.githubusercontent.com/BillMoriarty/open-reel/main/screenshots/openreel2.png</image>
+    </screenshot>
+  </screenshots>
+</component>

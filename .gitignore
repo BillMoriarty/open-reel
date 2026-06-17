@@ -10,3 +10,6 @@ BUILD_PLAN.md
 IDEAS_AND_RESEARCH.md
 MASCOT.md
 SPEC.md
+build-dir/
+.flatpak-builder/
+packaging/sources/
